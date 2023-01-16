@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.2/axios.min.js" integrity="sha512-QTnb9BQkG4fBYIt9JGvYmxPpd6TBeKp6lsUrtiVQsrJ9sb33Bn9s0wMQO9qVBFbPX3xHRAsBHvXlcsrnJjExjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css">
+
+    <title>PRODUCTS</title>
+</head>
+<body>
+    <header class="text-white p-5" style="background-color: green;">
+        <div class="container">
+            <h1 class="text-center">PRODUCTS</h1>
+        </div>
+    </header>
+    <div class="container mt-3">
+        <h2>Add Product</h2> 
+        <div  id="flash-message"  class="alert"></div>
+        <form id="addForm" >
+            <div class="form-group">
+                <label for="productName">Name</label>
+                <input type="text" name ="name" class="form-control" id="productName" placeholder="Name">
+            </div>
+            <div class="form-group">
+                <label for="productPrice">Price</label>
+                <input type="text" name ="price" class="form-control" id="productPrice" placeholder="Price">
+            </div>
+            <button type="submit" class="btn btn-sm">Submit</button>
+        </form>
+        <div class="row mt-3">
+            <div class="col-8"> <h3 class="text-success">All products</h3> </div>
+            <div class="col-4"><span class="m-2"><button class="btn btn-sm " id="loadMoreBtn">Load more</button></span></div>
+       
+          </div>
+         <div class="mt-3"></div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="items">
+
+                </tbody>
+                
+            </table>
+            
+        </div>
+        <div class="modal" tabindex="-1" role="dialog" id="productModal">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-body">
+                            <p>Name: <span class="product-name" id="name"></span></p>
+                            <p>Price: <span class="product-price" id="price"></span></p>
+                          </div>
+                     
+                        <form id="updateForm" style="display:none;">
+                            <input type="hidden" name="productId" value="" id="productId">
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input type="text" class="form-control" id="updateName" name="updatedname" value="">
+                            </div>
+                            <div class="form-group">
+                                <label for="price">Price</label>
+                                <input type="text" class="form-control" id="updatePrice" name="updatedprice" value="">
+                            </div>
+                            <button type="submit" class="btn btn-success">Update</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" id="deleteBtn" data-product-id="">Delete</button>
+                        <button type="button" class="btn btn-primary" id="updateBtn" data-product-id="">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js" integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI" crossorigin="anonymous"></script>
+    
+    <script>
+        const socket = io("ws://192.168.0.18:1234", {reconnection: true, rejectUnauthorized: false, transports: ["websocket"]
+});
+socket.on("connect_error", (err) => {
+  console.log(`connect_error due to ${err.message}`);
+});
+        console.log(socket);
+         socket.on('connect', function(){ 
+         console.log(socket.id);
+         console.log('ok Connected');
+         
+        socket.on('products', function(products){
+     
+            console.log(products);
+          // Clear the existing products
+          document.getElementById('items').innerHTML = '';
+          
+          // Loop through the products and add them to the list
+          products.forEach(function(product){
+            const productEl = document.createElement('tr');
+      productEl.innerHTML = `
+      <td> <input class="form-check-input ml-2" type="checkbox" value="" id="flexCheckDefault" /> </td>
+        <td>${product.name}</td>
+        <td>${product.price}</td>
+        <td>
+    <i class="fa-solid fa-greater-than text-neutral" data-toggle="modal" data-target="#productModal" data-product-id="${product._id}"></i>
+</td>
+      `;
+            
+            document.getElementById('items').appendChild(productEl);
+          });
+        });
+      });
+    
+  </script>
+    <script>
+        const form = document.getElementById('addForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('productName').value;
+            const price = document.getElementById('productPrice').value;
+            try {
+                const response = await axios.post('/products/create', { name, price });
+                console.log(response);} catch (error) {
+                console.log(error);
+                form.reset();
+            }
+            form.reset();
+        });
+                // Send the new product data to connected clients
+    socket.on("newProduct", (product) => {
+  
+
+    // Add the product to the list
+    const productEl = document.createElement('tr');
+      productEl.innerHTML = `
+      <td> <input class="form-check-input ml-2" type="checkbox" value="" id="flexCheckDefault" /> </td>
+        <td>${product.name}</td>
+        <td>${product.price}</td>
+        <td>
+    <i class="fa-solid fa-greater-than text-neutral" data-toggle="modal" data-target="#productModal" data-product-id="${product._id}"></i>
+</td>
+
+      `;
+            
+    document.getElementById('items').appendChild(productEl);
+    });
+
+    socket.on("flashMessage", (data) => {
+    const flashMessage = document.getElementById('flash-message');
+    flashMessage.innerHTML = data.message;
+    if(data.type === 'error'){
+       flashMessage.classList.add('alert-danger');
+    } else {
+       flashMessage.classList.remove('alert-danger');
+       flashMessage.classList.add('alert-success');
+    }
+    flashMessage.style.display = 'block';
+    setTimeout(() => {
+        flashMessage.style.display = 'none';
+    }, 3500);
+});
+
+
+</script>
+
+<script>
+document.querySelector('#deleteBtn').addEventListener('click', function() {
+  // Get the product ID from the data attribute
+  const productId = this.getAttribute('data-product-id');
+  // Send a DELETE request to the server to delete the product
+  axios.delete(`/products/${productId}/deletion`)
+    .then(function (response) {
+      console.log(response);
+      // Close the modal
+      $('#productModal').modal('hide');
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+});
+</script>
+
+<script>
+    // Listen to the delete event
+socket.on('deleteProduct', productId => {
+  // Find the product element
+  const productEl = document.querySelector('[data-product-id="'+ productId +'"]');
+  // Remove the element
+        // Remove the <td> element
+            productEl.closest('tr').remove();
+});
+
+</script>
+
+<script>
+let skip = 3;
+let limit = 3;
+
+document.getElementById("loadMoreBtn").addEventListener("click", function() {
+  axios
+    .get(`/products/loadmore/${skip}/${limit}`)
+    .then((res) => {
+      const products = res.data;
+      if (products.length === 0) {
+        document.getElementById("loadMoreBtn").style.display = "none";
+        return;
+      }
+      // render products
+      skip += limit;
+      products.forEach(function(product) {
+        const productEl = document.createElement("tr");
+        productEl.innerHTML = `
+          <td> <input class="form-check-input ml-2" type="checkbox" value="" id="flexCheckDefault" /> </td>
+          <td>${product.name}</td>
+          <td>${product.price}</td>
+          <td>
+            
+    <i class="fa-solid fa-greater-than text-neutral" data-toggle="modal" data-target="#productModal" data-product-id="${product._id}"></i>
+</td>
+          `;
+        document.getElementById("items").appendChild(productEl);
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+
+</script>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Attach the event listener to the table element
+  document.querySelector('table').addEventListener('click', function(event) {
+    // Check if the event target is the forward arrow icon
+    if (event.target.matches('.fa-greater-than')) {
+
+      console.log('clicked')
+      const productId = event.target.getAttribute('data-product-id');
+      console.log(productId)
+      document.querySelector('#deleteBtn').setAttribute('data-product-id', productId);
+
+      // Use axios to send a GET request to the server to get the product data by ID
+      axios.get(`/products/${productId}`)
+        .then(function (response) {
+            console.log(response)
+          // Update the modal with the product data
+          const product = response.data;
+          document.querySelector('.modal-title').innerHTML = product.name;
+  document.querySelector('.product-name').innerHTML = product.name;
+  document.querySelector('.product-price').innerHTML = product.price;
+  document.getElementById('productId').value =  product._id;
+  ;
+
+
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    };
+  });
+});
+</script>
+
+<script>
+
+document.getElementById('updateBtn').addEventListener('click', function() {
+  const form = document.getElementById('updateForm');
+  form.style.display = 'block';
+  document.getElementById('updateName').value = document.getElementById('name').innerHTML;
+  document.getElementById('updatePrice').value = document.getElementById('price').innerHTML;
+  document.getElementById('updateBtn').style.display = 'none';
+  document.getElementById('deleteBtn').style.display = 'none';
+});
+</script>
+
+<script>
+    document.querySelector('#updateForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const productId = document.querySelector('#productId').value;
+    const updatedname = document.querySelector('#updateName').value;
+    const updatedprice = document.querySelector('#updatePrice').value;
+
+    axios.put(`/products/${productId}/update`, { updatedname, updatedprice })
+        .then(function (response) {
+          
+            $('#productModal .close').click();
+            // Update the modal with the product data
+            const product = response.data;
+            document.querySelector('#productModal .modal-title').innerHTML = product.name;
+            document.querySelector('#name').innerHTML = product.name;
+            document.querySelector('#price').innerHTML = product.price;
+            // Send a success message to the client
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+});
+
+</script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+</html>    
