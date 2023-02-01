@@ -4,7 +4,7 @@ This is a basic project that demonstrates how to perform CRUD operations in Node
 
 ## Getting Started
 
-To get started with this project, you will need to have Node.js and MongoDB(or you cand use MongoDB online )installed on your machine.
+To get started with this project, you will need to have Node.js and MongoDB(or you cand use MongoDB online)installed on your machine.
 
 ### Prerequisites
 - Node.js
@@ -48,7 +48,7 @@ You will need to change the MongoDB URI in the config/db.js file to your own URI
 - nodemon
 - socket.io
 - websocket
-- ws
+
 ### Built With
 - [ Node.js ]- JavaScript runtime
 - [ MongoDB ] - Database
